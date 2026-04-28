@@ -85,7 +85,22 @@ CREATE TABLE recomendacion_ahorro_diaria (
     CONSTRAINT uq_hogar_fecha UNIQUE (id_hogar, fecha)
 );
 
--- 7. Tabla de suscriptores
+-- 7. Tabla de recomendación y ahorro diario (una por hogar por día)
+CREATE TABLE IF NOT EXISTS recomendacion_ahorro_diaria (
+    id SERIAL PRIMARY KEY,
+    id_hogar INT NOT NULL,
+    fecha DATE NOT NULL,
+    recomendaciones JSONB NOT NULL DEFAULT '[]',
+    ahorro_financiero VARCHAR(255),
+    impacto_ambiental VARCHAR(255),
+    indicador_didactico VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_recomendacion_diaria_hogar FOREIGN KEY (id_hogar)
+        REFERENCES hogares (id_hogar) ON DELETE CASCADE,
+    CONSTRAINT uq_hogar_fecha UNIQUE (id_hogar, fecha)
+);
+
+-- 8. Tabla de suscriptores
 CREATE TABLE subscribers (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
