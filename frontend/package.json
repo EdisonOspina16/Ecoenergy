@@ -9,12 +9,20 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ci": "vitest run --reporter=dot"
+    "test:ci": "vitest run --reporter=dot",
+    "install:browsers": "playwright install chromium",
+    "test:gemini": "tsx tests/login-gemini.e2e.ts",
+    "test:observe": "tsx tests/observe-extract.e2e.ts"
   },
   "dependencies": {
     "next": "^16.2.4",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "@browserbasehq/stagehand": "latest",
+    "dotenv": "^16.4.7",
+    "openai": "^4.104.0",
+    "playwright": "^1.53.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
@@ -37,7 +45,8 @@
     "typescript": "^5.2.2",
     "vite": "^8.0.10",
     "vitest": "^4.1.5",
-    "whatwg-fetch": "3.6.20"
+    "whatwg-fetch": "3.6.20",
+    "tsx": "^4.19.2"
   },
   "vitest": {
     "environment": "jsdom",
