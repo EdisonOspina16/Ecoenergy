@@ -11,8 +11,9 @@
     "test:watch": "vitest",
     "test:ci": "vitest run --reporter=dot",
     "install:browsers": "playwright install chromium",
-    "test:gemini": "tsx tests/login-gemini.e2e.ts",
-    "test:observe": "tsx tests/observe-extract.e2e.ts"
+    "test:registro": "tsx tests-AI/tests/registro.e2e.ts",
+    "test:login": "tsx tests-AI/tests/login.e2e.ts",
+    "test:recuperar": "tsx tests-AI/tests/recuperar.e2e.ts"
   },
   "dependencies": {
     "next": "^16.2.4",
