@@ -1,0 +1,24 @@
+{
+  "name": "stagehand-E2E-AI",
+  "version": "1.0.0",
+  "description": "Ejemplo de pruebas E2E con Stagehand, Playwright, Ollama local y OpenAI opcional.",
+  "type": "module",
+  "scripts": {
+    "install:browsers": "playwright install chromium",
+    "test:openai": "tsx tests/login-openai.e2e.ts",
+    "test:ollama": "tsx tests/login-ollama.e2e.ts",
+    "test:gemini": "tsx tests/login-gemini.e2e.ts",
+    "test:observe": "tsx tests/observe-extract.e2e.ts"
+  },
+  "dependencies": {
+    "@browserbasehq/stagehand": "latest",
+    "dotenv": "^16.4.7",
+    "openai": "^4.104.0",
+    "playwright": "^1.53.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.3"
+  }
+}
