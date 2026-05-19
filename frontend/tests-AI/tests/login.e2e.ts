@@ -1,7 +1,9 @@
 import { createGeminiStagehand } from "../src/stagehand-gemini";
 import dotenv from "dotenv";
 
-dotenv.config();
+// Load the .env file located in the tests-AI folder (running from frontend/) so
+// environment variables like GEMINI_API_KEY are available when the test runs.
+dotenv.config({ path: './tests-AI/.env' });
 
 async function main() {
     console.log("=== INICIANDO PRUEBA DE LOGIN CON GOOGLE GEMINI ===");
