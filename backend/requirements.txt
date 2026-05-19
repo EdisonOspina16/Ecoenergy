@@ -251,5 +251,8 @@ zope-event==6.1
 zope-interface==8.4
     # via gevent
 
+python-dotenv==1.2.2
+    # via -r requirements.in
+
 # The following packages are considered to be unsafe in a requirements file:
 # pip

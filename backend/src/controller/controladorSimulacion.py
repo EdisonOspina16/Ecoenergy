@@ -3,7 +3,7 @@ import threading
 import time
 import json
 from src.database import obtener_conexion
-from src.SecretConfig import GEMINI_API_KEY, GEMINI_MODEL
+from src.config import GEMINI_API_KEY, GEMINI_MODEL
 from google.genai.errors import ClientError
 from google import genai
 

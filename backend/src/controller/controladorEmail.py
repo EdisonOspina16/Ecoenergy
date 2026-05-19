@@ -1,6 +1,6 @@
 import smtplib
 from email.message import EmailMessage
-from src.SecretConfig import EMAIL_CONFIG
+from src.config import EMAIL_CONFIG
 
 def send_welcome_email(to_email):
     msg = EmailMessage()

@@ -2,7 +2,7 @@ import sys
 sys.path.append("src")
 
 import psycopg2
-from SecretConfig import PGHOST, PGDATABASE, PGUSER, PGPASSWORD
+from config import PGHOST, PGDATABASE, PGUSER, PGPASSWORD
 
 
 def obtener_conexion():
