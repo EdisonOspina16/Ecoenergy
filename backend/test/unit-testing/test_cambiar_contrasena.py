@@ -1,7 +1,9 @@
 import pytest
+from unittest.mock import patch
 from psycopg2 import Error as DatabaseError
 from src.domain.errors import ValidacionError, PersistenciaError, ConexionError
 from src.aplication.service import usuario_service as us
+from hamcrest import assert_that, is_, equal_to, contains_string
 
 # ------------ CONSTANTES DE PRUEBA --------------
 
@@ -32,9 +34,9 @@ class DummyCursor:
 
     def execute(self, query: str, params: tuple) -> None:
         self.last_query = query
-        self.last_params = params  # guarda (nueva_hash, correo) completo para el Spy
+        self.last_params = params
 
-        correo = params[1]  # tomamos el correo sin descartar nueva_hash
+        correo = params[1]
 
         if correo == CORREO_NO_EXISTE:
             self.rowcount = 0
@@ -101,7 +103,7 @@ def test_correo_valido_estandar(fake_db: DummyConnection) -> None:
     resultado = us.cambiar_contrasena(correo, nueva_contrasena)
 
     # Assert
-    assert resultado is True
+    assert_that(resultado, is_(True))
 
 
 def test_correo_sin_arroba(fake_db: DummyConnection) -> None:
@@ -114,7 +116,7 @@ def test_correo_sin_arroba(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "correo inválido" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("correo inválido"))
 
 
 def test_correo_vacio(fake_db: DummyConnection) -> None:
@@ -127,7 +129,7 @@ def test_correo_vacio(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "correo inválido" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("correo inválido"))
 
 
 def test_correo_sin_dominio(fake_db: DummyConnection) -> None:
@@ -140,7 +142,7 @@ def test_correo_sin_dominio(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "correo inválido" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("correo inválido"))
 
 
 def test_correo_sin_extension(fake_db: DummyConnection) -> None:
@@ -153,7 +155,7 @@ def test_correo_sin_extension(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "correo inválido" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("correo inválido"))
 
 
 def test_correo_doble_arroba(fake_db: DummyConnection) -> None:
@@ -166,7 +168,7 @@ def test_correo_doble_arroba(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "correo inválido" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("correo inválido"))
 
 
 def test_correo_con_espacios(fake_db: DummyConnection) -> None:
@@ -179,7 +181,7 @@ def test_correo_con_espacios(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "correo inválido" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("correo inválido"))
 
 
 def test_correo_con_mayusculas(fake_db: DummyConnection) -> None:
@@ -192,7 +194,7 @@ def test_correo_con_mayusculas(fake_db: DummyConnection) -> None:
     resultado = us.cambiar_contrasena(correo, nueva_contrasena)
 
     # Assert
-    assert resultado is True
+    assert_that(resultado, is_(True))
 
 
 # ==============================================================
@@ -209,7 +211,7 @@ def test_contrasena_fuerte_valida(fake_db: DummyConnection) -> None:
     resultado = us.cambiar_contrasena(correo, nueva_contrasena)
 
     # Assert
-    assert resultado is True
+    assert_that(resultado, is_(True))
 
 
 def test_contrasena_solo_minusculas(fake_db: DummyConnection) -> None:
@@ -222,7 +224,7 @@ def test_contrasena_solo_minusculas(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "contraseña inválida" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("contraseña inválida"))
 
 
 def test_contrasena_solo_numeros(fake_db: DummyConnection) -> None:
@@ -235,7 +237,7 @@ def test_contrasena_solo_numeros(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "contraseña inválida" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("contraseña inválida"))
 
 
 def test_contrasena_solo_mayusculas(fake_db: DummyConnection) -> None:
@@ -248,7 +250,7 @@ def test_contrasena_solo_mayusculas(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "contraseña inválida" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("contraseña inválida"))
 
 
 def test_contrasena_vacia(fake_db: DummyConnection) -> None:
@@ -261,7 +263,7 @@ def test_contrasena_vacia(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "contraseña inválida" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("contraseña inválida"))
 
 
 def test_contrasena_menos_de_8_caracteres(fake_db: DummyConnection) -> None:
@@ -274,7 +276,7 @@ def test_contrasena_menos_de_8_caracteres(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "contraseña inválida" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("contraseña inválida"))
 
 
 def test_contrasena_exactamente_8_caracteres(fake_db: DummyConnection) -> None:
@@ -287,7 +289,7 @@ def test_contrasena_exactamente_8_caracteres(fake_db: DummyConnection) -> None:
     resultado = us.cambiar_contrasena(correo, nueva_contrasena)
 
     # Assert
-    assert resultado is True
+    assert_that(resultado, is_(True))
 
 
 def test_contrasena_con_espacios(fake_db: DummyConnection) -> None:
@@ -300,7 +302,7 @@ def test_contrasena_con_espacios(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "contraseña inválida" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("contraseña inválida"))
 
 
 def test_contrasena_caracteres_especiales_validos(fake_db: DummyConnection) -> None:
@@ -313,7 +315,7 @@ def test_contrasena_caracteres_especiales_validos(fake_db: DummyConnection) -> N
     resultado = us.cambiar_contrasena(correo, nueva_contrasena)
 
     # Assert
-    assert resultado is True
+    assert_that(resultado, is_(True))
 
 
 # ==============================================================
@@ -334,10 +336,10 @@ def test_flujo_completo_post_cambio(fake_db: DummyConnection) -> None:
     resultado = us.cambiar_contrasena(correo, nueva_contrasena)
 
     # Assert
-    assert resultado is True
-    assert fake_db.committed is True                                    # Spy: se hizo commit
-    assert fake_db.cursor_obj.last_params[0] == HASH_ESPERADO          # Spy: nueva_hash llegó correctamente
-    assert fake_db.cursor_obj.last_params[1] == CORREO_VALIDO          # Spy: correo normalizado a minúsculas
+    assert_that(resultado, is_(True))
+    assert_that(fake_db.committed, is_(True))
+    assert_that(fake_db.cursor_obj.last_params[0], equal_to(HASH_ESPERADO))
+    assert_that(fake_db.cursor_obj.last_params[1], equal_to(CORREO_VALIDO))
 
 
 # ==============================================================
@@ -354,7 +356,7 @@ def test_correo_no_registrado_retorna_false(fake_db: DummyConnection) -> None:
     resultado = us.cambiar_contrasena(correo, nueva_contrasena)
 
     # Assert
-    assert resultado is False
+    assert_that(resultado, is_(False))
 
 
 # ==============================================================
@@ -371,22 +373,22 @@ def test_error_generico_base_datos(fake_db: DummyConnection) -> None:
     with pytest.raises(PersistenciaError) as exc_info:
         us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "error en base de datos" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("error en base de datos"))
 
 
 # ==============================================================
 # PRUEBA DE SIN CONEXIÓN A BASE DE DATOS
 # ==============================================================
 
-def test_sin_conexion_bd(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Stub: cuando obtener_conexion() retorna None debe lanzar ConexionError."""
+def test_sin_conexion_bd() -> None:
+    """Mock: cuando obtener_conexion() retorna None debe lanzar ConexionError."""
     # Arrange
-    monkeypatch.setattr(us, "obtener_conexion", lambda: None)
     correo = CORREO_VALIDO
     nueva_contrasena = CONTRASENA_VALIDA
 
     # Act & Assert
-    with pytest.raises(ConexionError) as exc_info:
-        us.cambiar_contrasena(correo, nueva_contrasena)
+    with patch.object(us, "obtener_conexion", return_value=None):
+        with pytest.raises(ConexionError) as exc_info:
+            us.cambiar_contrasena(correo, nueva_contrasena)
 
-    assert "no se pudo conectar" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("no se pudo conectar"))

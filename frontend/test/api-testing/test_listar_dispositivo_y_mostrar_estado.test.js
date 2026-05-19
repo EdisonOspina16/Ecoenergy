@@ -1,10 +1,11 @@
 /**
  * Pruebas Unitarias - Frontend
  * Función: listarDispositivos
- * Framework: Vitest
+ * Framework: Vitest + Chai (fluent assertions)
  */
 
-import { describe, test, expect } from "vitest";
+import { describe, test } from "vitest";
+import { expect } from "chai";
 
 async function listarDispositivos(fetchFn) {
   let dispositivos = [];
@@ -25,7 +26,7 @@ async function listarDispositivos(fetchFn) {
     } else {
       throw new Error("Error del servidor");
     }
-  } catch (e) {
+  } catch (e) { //NOSONAR
     errorMsg = "Error al cargar";
     dispositivos = [];
   }
@@ -48,10 +49,10 @@ describe("listarDispositivos", () => {
 
     const resultado = await listarDispositivos(fetchFn);
 
-    expect(Array.isArray(resultado.dispositivos)).toBe(true);
-    expect(resultado.dispositivos.length).toBe(2);
-    expect(resultado.dispositivos[0].nombre).toBe("Lámpara");
-    expect(resultado.errorMsg).toBeNull();
+    expect(Array.isArray(resultado.dispositivos)).to.equal(true);
+    expect(resultado.dispositivos.length).to.equal(2);
+    expect(resultado.dispositivos[0].nombre).to.equal("Lámpara");
+    expect(resultado.errorMsg).to.be.null;
   });
 
   test("C2 - success=false: retorna lista vacía", async () => {
@@ -62,8 +63,8 @@ describe("listarDispositivos", () => {
 
     const resultado = await listarDispositivos(fetchFn);
 
-    expect(resultado.dispositivos).toEqual([]);
-    expect(resultado.errorMsg).toBeNull();
+    expect(resultado.dispositivos).to.deep.equal([]);
+    expect(resultado.errorMsg).to.be.null;
   });
 
   test("C3 - Servidor retorna 404/500: lista vacía con error", async () => {
@@ -71,8 +72,8 @@ describe("listarDispositivos", () => {
 
     const resultado = await listarDispositivos(fetchFn);
 
-    expect(resultado.dispositivos).toEqual([]);
-    expect(resultado.errorMsg).toBe("Error al cargar");
+    expect(resultado.dispositivos).to.deep.equal([]);
+    expect(resultado.errorMsg).to.equal("Error al cargar");
   });
 
   test("C4 - Error de red: fetch lanza excepción, lista vacía", async () => {
@@ -82,7 +83,7 @@ describe("listarDispositivos", () => {
 
     const resultado = await listarDispositivos(fetchFn);
 
-    expect(resultado.dispositivos).toEqual([]);
-    expect(resultado.errorMsg).toBe("Error al cargar");
+    expect(resultado.dispositivos).to.deep.equal([]);
+    expect(resultado.errorMsg).to.equal("Error al cargar");
   });
 });

@@ -1,7 +1,16 @@
 import pytest
 from psycopg2 import Error as DatabaseError
+from hamcrest import (
+    assert_that,
+    equal_to,
+    contains_string,
+    is_,
+    has_length
+)
+
 from src.domain.errors import ValidacionError, PersistenciaError, ConexionError, CorreoDuplicadoError
 from src.aplication.service import subscriber_service as ss
+
 
 # CONSTANTES DE PRUEBA
 
@@ -16,14 +25,10 @@ CORREO_CON_ESPACIOS     = "usuario @gmail.com"
 
 
 # ==============================================================
-# INFRAESTRUCTURA DE PRUEBA (Objetos Fake y Helper Stub)
+# INFRAESTRUCTURA DE PRUEBA
 # ==============================================================
 
 class DummyCursor:
-    """
-    Fake: Implementación funcional simplificada de un cursor de BD.
-    Simula INSERT exitoso, duplicado o error genérico según el correo.
-    """
 
     def __init__(self) -> None:
         self.closed: bool = False
@@ -40,10 +45,6 @@ class DummyCursor:
 
 
 class DummyConnection:
-    """
-    Fake: Implementación funcional simplificada de una conexión a BD.
-    Registra commit, rollback y cierre sin interactuar con una BD real.
-    """
 
     def __init__(self) -> None:
         self.committed: bool = False
@@ -65,12 +66,6 @@ class DummyConnection:
 
 @pytest.fixture(autouse=True)
 def fake_db(monkeypatch: pytest.MonkeyPatch) -> DummyConnection:
-    """
-    Fixture compartido (Arrange global):
-    - Stub: reemplaza obtener_conexion() con DummyConnection.
-    - Stub: reemplaza send_welcome_email() con versión sin efecto.
-    Se aplica automáticamente a todas las pruebas del módulo.
-    """
     conn = DummyConnection()
     monkeypatch.setattr(ss, "obtener_conexion", lambda: conn)
     monkeypatch.setattr(ss, "send_welcome_email", lambda email: None)
@@ -78,11 +73,10 @@ def fake_db(monkeypatch: pytest.MonkeyPatch) -> DummyConnection:
 
 
 # ==============================================================
-# CP-SC-01: REGISTRO EXITOSO CON CORREO VÁLIDO
+# PRUEBAS
 # ==============================================================
 
-def test_correo_valido_registra_exitosamente(fake_db: DummyConnection) -> None:
-    """CP-SC-01: Un correo válido debe registrarse exitosamente."""
+def test_correo_valido_registra_exitosamente(fake_db):
     # Arrange
     email = CORREO_VALIDO
 
@@ -90,44 +84,38 @@ def test_correo_valido_registra_exitosamente(fake_db: DummyConnection) -> None:
     exito, mensaje = ss.subscribe_user(email)
 
     # Assert
-    assert exito is True
-    assert "registrado" in mensaje.lower()
+    assert_that(exito, is_(True))
+    assert_that(mensaje.lower(), contains_string("registrado"))
 
 
-def test_correo_valido_hace_commit(fake_db: DummyConnection) -> None:
-    """CP-SC-01: Tras registrar exitosamente debe realizarse commit en la BD."""
+def test_correo_valido_hace_commit(fake_db):
     # Arrange
     email = CORREO_VALIDO
 
     # Act
     ss.subscribe_user(email)
 
-    # Assert — Spy: commit se ejecutó
-    assert fake_db.committed is True
+    # Assert
+    assert_that(fake_db.committed, is_(True))
 
 
-def test_correo_valido_envia_bienvenida(monkeypatch: pytest.MonkeyPatch, fake_db: DummyConnection) -> None:
-    """CP-SC-01: Tras registrar exitosamente debe enviarse el correo de bienvenida."""
+def test_correo_valido_envia_bienvenida(monkeypatch, fake_db):
     # Arrange
     email = CORREO_VALIDO
     emails_enviados = []
-
-    # Spy: registra los correos enviados
     monkeypatch.setattr(ss, "send_welcome_email", lambda e: emails_enviados.append(e))
 
     # Act
     ss.subscribe_user(email)
 
-    # Assert — Spy: se envió el correo de bienvenida
-    assert email in emails_enviados
+    # Assert
+    assert_that(emails_enviados, has_length(1))
+    assert_that(emails_enviados[0], equal_to(email))
 
 
-# ==============================================================
-# CP-SC-02: CORREO CON FORMATO INVÁLIDO
-# ==============================================================
+# ================= VALIDACIONES =================
 
-def test_correo_sin_arroba_lanza_validacion_error(fake_db: DummyConnection) -> None:
-    """CP-SC-02: Un correo sin @ debe lanzar ValidacionError."""
+def test_correo_sin_arroba_lanza_validacion_error(fake_db):
     # Arrange
     email = CORREO_SIN_ARROBA
 
@@ -135,11 +123,10 @@ def test_correo_sin_arroba_lanza_validacion_error(fake_db: DummyConnection) -> N
     with pytest.raises(ValidacionError) as exc_info:
         ss.subscribe_user(email)
 
-    assert "correo inválido" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("correo inválido"))
 
 
-def test_correo_sin_dominio_lanza_validacion_error(fake_db: DummyConnection) -> None:
-    """CP-SC-02: Un correo sin dominio después del @ debe lanzar ValidacionError."""
+def test_correo_sin_dominio_lanza_validacion_error(fake_db):
     # Arrange
     email = CORREO_SIN_DOMINIO
 
@@ -147,11 +134,10 @@ def test_correo_sin_dominio_lanza_validacion_error(fake_db: DummyConnection) -> 
     with pytest.raises(ValidacionError) as exc_info:
         ss.subscribe_user(email)
 
-    assert "correo inválido" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("correo inválido"))
 
 
-def test_correo_sin_extension_lanza_validacion_error(fake_db: DummyConnection) -> None:
-    """CP-SC-02: Un correo sin extensión (.com, .co) debe lanzar ValidacionError."""
+def test_correo_sin_extension_lanza_validacion_error(fake_db):
     # Arrange
     email = CORREO_SIN_EXTENSION
 
@@ -159,11 +145,10 @@ def test_correo_sin_extension_lanza_validacion_error(fake_db: DummyConnection) -
     with pytest.raises(ValidacionError) as exc_info:
         ss.subscribe_user(email)
 
-    assert "correo inválido" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("correo inválido"))
 
 
-def test_correo_con_espacios_lanza_validacion_error(fake_db: DummyConnection) -> None:
-    """CP-SC-02: Un correo con espacios debe lanzar ValidacionError."""
+def test_correo_con_espacios_lanza_validacion_error(fake_db):
     # Arrange
     email = CORREO_CON_ESPACIOS
 
@@ -171,15 +156,12 @@ def test_correo_con_espacios_lanza_validacion_error(fake_db: DummyConnection) ->
     with pytest.raises(ValidacionError) as exc_info:
         ss.subscribe_user(email)
 
-    assert "correo inválido" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("correo inválido"))
 
 
-# ==============================================================
-# CP-SC-03: CORREO YA REGISTRADO (DUPLICADO)
-# ==============================================================
+# ================= DUPLICADOS =================
 
-def test_correo_duplicado_retorna_false(fake_db: DummyConnection) -> None:
-    """CP-SC-03: Un correo ya registrado debe retornar (False, 'Correo ya registrado')."""
+def test_correo_duplicado_retorna_false(fake_db):
     # Arrange
     email = CORREO_DUPLICADO
 
@@ -187,32 +169,26 @@ def test_correo_duplicado_retorna_false(fake_db: DummyConnection) -> None:
     exito, mensaje = ss.subscribe_user(email)
 
     # Assert
-    assert exito is False
-    assert "ya registrado" in mensaje.lower()
+    assert_that(exito, is_(False))
+    assert_that(mensaje.lower(), contains_string("ya registrado"))
 
 
-def test_correo_duplicado_no_envia_bienvenida(monkeypatch: pytest.MonkeyPatch, fake_db: DummyConnection) -> None:
-    """CP-SC-03: Si el correo ya existe no debe enviarse el correo de bienvenida."""
+def test_correo_duplicado_no_envia_bienvenida(monkeypatch, fake_db):
     # Arrange
     email = CORREO_DUPLICADO
     emails_enviados = []
-
-    # Spy: registra si se intentó enviar
     monkeypatch.setattr(ss, "send_welcome_email", lambda e: emails_enviados.append(e))
 
     # Act
     ss.subscribe_user(email)
 
-    # Assert — Spy: no se envió correo de bienvenida
-    assert len(emails_enviados) == 0
+    # Assert
+    assert_that(emails_enviados, has_length(0))
 
 
-# ==============================================================
-# CP-SC-04: CAMPO CORREO VACÍO
-# ==============================================================
+# ================= VACÍOS =================
 
-def test_correo_vacio_lanza_validacion_error(fake_db: DummyConnection) -> None:
-    """CP-SC-04: Un correo vacío debe lanzar ValidacionError."""
+def test_correo_vacio_lanza_validacion_error(fake_db):
     # Arrange
     email = ""
 
@@ -220,11 +196,10 @@ def test_correo_vacio_lanza_validacion_error(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         ss.subscribe_user(email)
 
-    assert "correo obligatorio" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("correo obligatorio"))
 
 
-def test_correo_nulo_lanza_validacion_error(fake_db: DummyConnection) -> None:
-    """CP-SC-04: Un correo None debe lanzar ValidacionError."""
+def test_correo_nulo_lanza_validacion_error(fake_db):
     # Arrange
     email = None
 
@@ -232,15 +207,12 @@ def test_correo_nulo_lanza_validacion_error(fake_db: DummyConnection) -> None:
     with pytest.raises(ValidacionError) as exc_info:
         ss.subscribe_user(email)
 
-    assert "correo obligatorio" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("correo obligatorio"))
 
 
-# ==============================================================
-# CP-SC-05: CORREO CON CARACTERES ESPECIALES VÁLIDOS
-# ==============================================================
+# ================= CASOS VÁLIDOS EXTRA =================
 
-def test_correo_con_caracteres_especiales_validos(fake_db: DummyConnection) -> None:
-    """CP-SC-05: Un correo con + y tag debe ser aceptado y registrado exitosamente."""
+def test_correo_con_caracteres_especiales_validos(fake_db):
     # Arrange
     email = CORREO_ESPECIALES
 
@@ -248,17 +220,14 @@ def test_correo_con_caracteres_especiales_validos(fake_db: DummyConnection) -> N
     exito, mensaje = ss.subscribe_user(email)
 
     # Assert
-    assert exito is True
-    assert "registrado" in mensaje.lower()
+    assert_that(exito, is_(True))
+    assert_that(mensaje.lower(), contains_string("registrado"))
 
 
-# ==============================================================
-# PRUEBA DE SIN CONEXIÓN A BASE DE DATOS
-# ==============================================================
+# ================= ERRORES =================
 
-def test_sin_conexion_bd_lanza_conexion_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Stub: cuando obtener_conexion() retorna None debe lanzar ConexionError."""
-    # Arrange — Stub: fuerza obtener_conexion() a retornar None
+def test_sin_conexion_bd_lanza_conexion_error(monkeypatch):
+    # Arrange
     monkeypatch.setattr(ss, "obtener_conexion", lambda: None)
     monkeypatch.setattr(ss, "send_welcome_email", lambda email: None)
     email = CORREO_VALIDO
@@ -267,23 +236,15 @@ def test_sin_conexion_bd_lanza_conexion_error(monkeypatch: pytest.MonkeyPatch) -
     with pytest.raises(ConexionError) as exc_info:
         ss.subscribe_user(email)
 
-    assert "no se pudo conectar" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("no se pudo conectar"))
 
 
-# ==============================================================
-# PRUEBA DE ERROR GENÉRICO DE BASE DE DATOS
-# ==============================================================
-
-def test_error_generico_base_datos_lanza_persistencia_error(fake_db: DummyConnection) -> None:
-    """
-    Fake: el DummyCursor lanza DatabaseError genérico para CORREO_ERROR_BD,
-    lo que debe propagarse como PersistenciaError desde el repository.
-    """
-    # Arrange — Fake: cursor dispara error genérico de BD
+def test_error_generico_base_datos_lanza_persistencia_error(fake_db):
+    # Arrange
     email = CORREO_ERROR_BD
 
     # Act & Assert
     with pytest.raises(PersistenciaError) as exc_info:
         ss.subscribe_user(email)
 
-    assert "error en base de datos" in str(exc_info.value).lower()
+    assert_that(str(exc_info.value).lower(), contains_string("error en base de datos"))
