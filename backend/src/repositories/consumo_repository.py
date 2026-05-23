@@ -120,7 +120,7 @@ def guardar_recomendacion_diaria(id_hogar: int, recomendaciones: list, ahorro: d
         """,
         (
             id_hogar,
-            _json.dumps(recomendaciones),
+            _json.dumps(recomendaciones, ensure_ascii=False),
             ahorro.get("ahorro_financiero"),
             ahorro.get("impacto_ambiental"),
             ahorro.get("indicador_didactico"),

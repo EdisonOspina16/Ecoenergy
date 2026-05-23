@@ -21,7 +21,12 @@ describe("Página: Dashboard Hogar", () => {
     vi.spyOn(useDispositivosHooks, "cargarDispositivos").mockImplementation(
       ({ setDevices, setLoadingDevices }) => {
         setDevices([
-          { nombre: "Nevera Inteligente", consumo: 30, estado: "Encendido" },
+          {
+            nombre: "Nevera Inteligente",
+            consumo: 0.12,
+            watts: 180,
+            estado: "Encendido",
+          },
         ]);
         setLoadingDevices(false);
         return Promise.resolve();
@@ -49,7 +54,11 @@ describe("Página: Dashboard Hogar", () => {
       if (urlStr.includes("/home")) {
         return Promise.resolve({
           ok: true,
-          json: async () => ({ success: true, total_consumo_kwh: 520 }),
+          json: async () => ({
+            success: true,
+            total_consumo_kwh: 4.2,
+            potencia_actual_kw: 0.85,
+          }),
         } as Response);
       }
       if (urlStr.includes("recomendacion-diaria")) {
@@ -83,7 +92,8 @@ describe("Página: Dashboard Hogar", () => {
     });
 
     // Verifica la interpolación de state
-    expect(screen.queryByText("30.00 kWh")).to.not.equal(null);
+    expect(screen.queryByText("0.85")).to.not.equal(null);
+    expect(screen.queryByText("0.18 kW · 0.120 kWh (24 h)")).to.not.equal(null);
   });
 
   it("debería llamar a los servicios correspondientes on mount (Verify Fetch Spies)", async () => {

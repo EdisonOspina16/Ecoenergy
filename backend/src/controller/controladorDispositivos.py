@@ -66,7 +66,7 @@ def crear_dispositivo(id_hogar, alias, id_dispositivo_iot):
         
         cur.execute("""
             INSERT INTO dispositivos (id_hogar, alias, id_dispositivo_iot, estado_activo)
-            VALUES (%s, %s, %s, FALSE)
+            VALUES (%s, %s, %s, TRUE)
             RETURNING id_dispositivos, id_hogar, alias, id_dispositivo_iot, 
                       tipo_dispositivo_ia, estado_activo, fecha_conexion
         """, (id_hogar, alias, id_dispositivo_iot))

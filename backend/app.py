@@ -1,5 +1,12 @@
+import os
 import sys
+
+os.environ.setdefault("PYTHONUTF8", "1")
 sys.path.append("src")
+
+from src.infrastructure.ia.text_encoding import configurar_utf8_proceso
+
+configurar_utf8_proceso()
 
 from flask import Flask
 from flask_cors import CORS
@@ -17,6 +24,7 @@ from prometheus_flask_exporter import PrometheusMetrics
 
 # CSRF no aplicado porque es API REST con autenticación controlada
 app = Flask(__name__) # NOSONAR
+app.config["JSON_AS_ASCII"] = False
 app.secret_key = 'clave_secreta_super_segura_iper_iper_segura_ecoenergy_123' # NOSONAR - Solo para desarrollo, no usar en producción
 metrics = PrometheusMetrics(app)
 

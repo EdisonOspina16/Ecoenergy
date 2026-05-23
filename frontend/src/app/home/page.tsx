@@ -22,6 +22,7 @@ export default function Home() {
   const [homeName, setHomeName] = useState<string>('Mi Hogar');
   const [address, setAddress] = useState<string>('Sin dirección');
   const [totalConsumo, setTotalConsumo] = useState<number>(0);
+  const [potenciaActualKw, setPotenciaActualKw] = useState<number>(0);
   const [lastUpdate, setLastUpdate] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
@@ -105,6 +106,9 @@ export default function Home() {
 
         if (data && typeof data.total_consumo_kwh === 'number') {
           setTotalConsumo(data.total_consumo_kwh);
+          setPotenciaActualKw(
+            typeof data.potencia_actual_kw === 'number' ? data.potencia_actual_kw : 0
+          );
           setLastUpdate(new Date().toLocaleString('es-ES'));
         }
       } catch (error) {
@@ -220,9 +224,13 @@ export default function Home() {
     }
   };
 
-  // Cargar dispositivos desde backend
+  // Cargar dispositivos del usuario (actualización periódica con la simulación)
   useEffect(() => {
     cargarDispositivos({ setDevices, setLoadingDevices });
+    const interval = setInterval(() => {
+      cargarDispositivos({ setDevices, setLoadingDevices, silent: true });
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // Render del gráfico SVG
@@ -477,9 +485,18 @@ export default function Home() {
               {loading ? (
                 <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#10B981' }}>Cargando...</p>
               ) : (
-                <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#10B981' }}>
-                  {Number(totalConsumo || 0).toFixed(2)} <span style={{ fontSize: '1.5rem', color: '#6B7280' }}>kWh</span>
-                </p>
+                <>
+                  <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#10B981', marginBottom: '0.25rem' }}>
+                    {Number(potenciaActualKw || 0).toFixed(2)}{' '}
+                    <span style={{ fontSize: '1.5rem', color: '#6B7280' }}>kW</span>
+                  </p>
+                  <p style={{ fontSize: '0.95rem', color: '#4B5563' }}>
+                    Consumo actual (dispositivos encendidos)
+                  </p>
+                  <p style={{ fontSize: '1rem', color: '#6B7280', marginTop: '0.75rem' }}>
+                    {Number(totalConsumo || 0).toFixed(2)} kWh en las últimas 24 h
+                  </p>
+                </>
               )}
               <p style={{ fontSize: '0.875rem', color: '#6B7280', marginTop: '0.5rem' }}>{lastUpdate ? `Última actualización: ${lastUpdate}` : 'Actualizando...'}</p>
             </div>
@@ -557,7 +574,11 @@ export default function Home() {
                         </span>
                         <div>
                           <p style={{ fontWeight: '600' }}>{device.nombre}</p>
-                          <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>{Number(device.consumo || 0).toFixed(2)} kWh</p>
+                          <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>
+                            {device.estado === 'Encendido'
+                              ? `${((Number(device.watts) || 0) / 1000).toFixed(2)} kW · ${Number(device.consumo || 0).toFixed(4)} kWh (24 h)`
+                              : `${((Number(device.watts) || 0) / 1000).toFixed(2)} kW · apagado (sin simulación activa)`}
+                          </p>
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

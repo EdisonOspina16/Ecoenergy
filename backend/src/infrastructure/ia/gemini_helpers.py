@@ -1,6 +1,7 @@
 import json
 import random
 from google.genai.errors import ClientError
+from src.infrastructure.ia.text_encoding import asegurar_texto_unicode
 
 # ── Respuestas de fallback ────────────────────────────────────────────────────
 
@@ -27,6 +28,7 @@ _FALLBACK = {
 
 def construir_prompt_recomendacion(consumo_watts: float, dispositivo: str) -> str:
     """Construye el prompt para la recomendación de un dispositivo."""
+    dispositivo = asegurar_texto_unicode(dispositivo)
     return f"""
     Eres un asistente energético inteligente especializado en analizar el consumo de dispositivos eléctricos.
 
@@ -53,7 +55,12 @@ def construir_prompt_ahorro_estimado(dispositivos: list[dict]) -> str:
         "Usa una analogía con comida o cocina (ej: horas de horno encendido, tazas de café preparadas).",
     ]
 
-    resumen = "\n".join([f"- {d['nombre']}: {d['consumo_watts']} W" for d in dispositivos])
+    resumen = "\n".join(
+        [
+            f"- {asegurar_texto_unicode(d['nombre'])}: {d['consumo_watts']} W"
+            for d in dispositivos
+        ]
+    )
     consumo_total = sum(d["consumo_watts"] for d in dispositivos)
     estilo_aleatorio = random.choice(estilos_didacticos)
     variacion = random.randint(1, 9999)
