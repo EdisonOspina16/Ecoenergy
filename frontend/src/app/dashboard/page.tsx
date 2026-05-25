@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Head from "next/head";
 import styles from "../../styles/login.module.css";
 
 interface Usuario {
@@ -97,14 +96,6 @@ export default function Dashboard() {
 
   return (
     <>
-      <Head>
-        <title>Dashboard - EcoEnergy</title>
-        <link
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-          rel="stylesheet"
-        />
-      </Head>
-
       <header className={styles.header}>
         {"ECOENERGY DASHBOARD"}
         <span style={{ color: "#FFD700", marginLeft: "10px" }}>

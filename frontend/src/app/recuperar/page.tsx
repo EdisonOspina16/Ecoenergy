@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Head from "next/head";
 import styles from "../../styles/login.module.css";
 import { useRecuperar } from "../../hooks/useRecuperar";
 
@@ -19,14 +18,6 @@ export default function Recuperar() {
 
   return (
     <>
-      <Head>
-        <title>Recuperar contrasena - EcoEnergy</title>
-        <link
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-          rel="stylesheet"
-        />
-      </Head>
-
       <header className={styles.header}>
         {"ECOENERGY"}
         <span style={{ color: "#FFD700", marginLeft: "10px" }}>

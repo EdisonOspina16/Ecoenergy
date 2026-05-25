@@ -13,16 +13,19 @@
     "install:browsers": "playwright install chromium",
     "test:registro": "tsx tests-AI/tests/registro.e2e.ts",
     "test:login": "tsx tests-AI/tests/login.e2e.ts",
-    "test:recuperar": "tsx tests-AI/tests/recuperar.e2e.ts"
+    "test:recuperar": "tsx tests-AI/tests/recuperar.e2e.ts",
+    "cy:open": "cypress open --project test/cypress",
+    "cy:run": "cypress run --project test/cypress",
+    "cy:test": "start-server-and-test dev http://localhost:3000 cy:run"
   },
   "dependencies": {
-    "next": "^16.2.4",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
     "@browserbasehq/stagehand": "latest",
     "dotenv": "^16.4.7",
+    "next": "^16.2.4",
     "openai": "^4.104.0",
     "playwright": "^1.53.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -38,16 +41,19 @@
     "@vitejs/plugin-react-swc": "^3.5.0",
     "@vitest/coverage-v8": "^4.1.5",
     "chai": "^6.2.2",
+    "cypress": "^13.17.0",
+    "cypress-axe": "^1.5.0",
     "eslint": "8.50.0",
     "eslint-config-next": "13.5.6",
     "jsdom": "23.2.0",
     "mocha": "^11.3.0",
+    "start-server-and-test": "^2.0.3",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.2.2",
     "vite": "^8.0.10",
     "vitest": "^4.1.5",
-    "whatwg-fetch": "3.6.20",
-    "tsx": "^4.19.2"
+    "whatwg-fetch": "3.6.20"
   },
   "vitest": {
     "environment": "jsdom",
