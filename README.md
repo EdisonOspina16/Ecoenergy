@@ -146,8 +146,8 @@ http://localhost:3000/
 
 ## Desarrolladores:
 
-- Ximena Ruíz
 - Edison Ospina
-- Juliana Alvarez
 - Ana Sofia Londoño
-- Tomas Ramírez Agudelo
+- Tomas Ramírez
+- Ximena Ruíz
+- Juliana Alvarez
