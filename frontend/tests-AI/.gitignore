@@ -4,3 +4,20 @@ node_modules/
 playwright-report/
 test-results/
 dist/
+tests-AI/.env
+.next/
+.stagehand-cache/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+deepeval_results/
+
+# OS
+.DS_Store
+Thumbs.db

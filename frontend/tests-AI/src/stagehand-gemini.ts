@@ -7,7 +7,7 @@ function toBoolean(value: string | undefined, defaultValue = false): boolean {
 
 export function createGeminiStagehand(): Stagehand {
   const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL || 'google/gemini-2.5-flash';
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash-preview-04-17';
 
   if (!apiKey || apiKey.includes('your-key-here') || apiKey.includes('tu_api_key')) {
     throw new Error(
@@ -17,12 +17,12 @@ export function createGeminiStagehand(): Stagehand {
 
   return new Stagehand({
     env: 'LOCAL',
-    model,
-    modelClientOptions: {
-      apiKey
+    model: {
+      modelName,
+      apiKey,
     },
     localBrowserLaunchOptions: {
-      headless: toBoolean(process.env.HEADLESS, false)
+      headless: toBoolean(process.env.HEADLESS, false),
     }
   });
 }
