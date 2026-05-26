@@ -1,116 +1,82 @@
-"""
-Tests de evaluación para la funcionalidad de Cambiar Contraseña
-Valida correctness, RAG, toxicity y task completion del cambio de contraseña.
-"""
-
 from deepeval import assert_test
+from deepeval.metrics import AnswerRelevancyMetric, FaithfulnessMetric, GEval, ToxicityMetric
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
-from deepeval.metrics import GEval, AnswerRelevancyMetric, FaithfulnessMetric, ToxicityMetric
-from deepeval_tests.common import load_cambiar_contraseña_context
+
+from deepeval_tests.common import load_cambiar_contrasena_context
 from deepeval_tests.models import get_evaluation_model
 
-# ─── Shared setup ────────────────────────────────────────────
+
 evaluation_model = get_evaluation_model()
-rag_context = [load_cambiar_contraseña_context()]
+rag_context = [load_cambiar_contrasena_context()]
 
-# ─── Test 1: Corrección ──────────────────────────────────────
-def test_cambiar_contraseña_correctness():
-    """Verifica que el mensaje de cambio de contraseña sea correcto."""
+
+def test_cambiar_contrasena_correctness():
     test_case = LLMTestCase(
-        input="Interpretar el resultado del cambio de contraseña.",
+        input="Interpretar el resultado del cambio de contrasena.",
         actual_output='{"message": "contrasena actualizada correctamente", "redirect": "/login"}',
-        expected_output="contrasena actualizada correctamente"
+        expected_output="contrasena actualizada correctamente",
     )
-    correctness = GEval(
+    metric = GEval(
         name="Change Password Correctness",
-        criteria="Evalúa si la salida corresponde correctamente al mensaje esperado de cambio.",
-        evaluation_params=[
-            LLMTestCaseParams.INPUT,
-            LLMTestCaseParams.ACTUAL_OUTPUT,
-            LLMTestCaseParams.EXPECTED_OUTPUT
-        ],
-        threshold=0.7,
-        model=evaluation_model
-    )
-    assert_test(test_case, [correctness])
-
-# ─── Test 2: RAG ─────────────────────────────────────────────
-def test_cambiar_contraseña_rag():
-    """Valida la relevancia y fidelidad de la respuesta de cambio de contraseña."""
-    test_case = LLMTestCase(
-        input="¿Se cambió correctamente la contraseña?",
-        actual_output=(
-            "Sí, la contraseña se cambió correctamente. Se realizó POST a /recuperar "
-            "con correo='usuario@example.com' y nueva_contrasena='NuevaPass123'. "
-            "El servidor validó que el email existe, actualizo la contraseña en la BD, "
-            "y retornó: "
-            '{"message": "contrasena actualizada correctamente", "redirect": "/login"}'
-        ),
-        expected_output="Sí, la contraseña se cambió correctamente.",
-        retrieval_context=rag_context
-    )
-    metrics = [
-        AnswerRelevancyMetric(threshold=0.7, model=evaluation_model),
-        FaithfulnessMetric(threshold=0.7, model=evaluation_model)
-    ]
-    assert_test(test_case, metrics)
-
-# ─── Test 3: Toxicidad ───────────────────────────────────────
-def test_cambiar_contraseña_toxicity():
-    """Verifica que el mensaje de error de cambio de contraseña no sea tóxico."""
-    test_case = LLMTestCase(
-        input="¿Qué pasa si el email no existe?",
-        actual_output=(
-            "Si el email no existe en la BD, el servidor retorna error 404: "
-            '{"error": "No se encontró el correo"}'
-        )
-    )
-    toxicity = ToxicityMetric(threshold=0.5, model=evaluation_model)
-    assert_test(test_case, [toxicity])
-
-# ─── Test 4: Task Completion ─────────────────────────────────
-def test_cambiar_contraseña_task_completion():
-    """Valida que el agente complete correctamente el cambio de contraseña."""
-    test_case = LLMTestCase(
-        input=(
-            "Realiza un cambio de contraseña. Envía POST a /recuperar con "
-            "correo='usuario@example.com' y nueva_contrasena='NuevaSecurePass456'. "
-            "Valida que se reciba el mensaje de éxito."
-        ),
-        actual_output=(
-            "La tarea fue completada. El agente realizó POST a /recuperar con "
-            "correo='usuario@example.com' y nueva_contrasena='NuevaSecurePass456', "
-            "recibió: "
-            '{"message": "contrasena actualizada correctamente", "redirect": "/login"}, '
-            "indicando que el servidor validó el email, actualizó la contraseña en la BD, "
-            "y retornó redirect=/login para que se autentique con la nueva contraseña."
-        ),
-        expected_output=(
-            "El agente debe cambiar la contraseña con email y nueva contraseña válidos "
-            "y confirmar que se recibió el mensaje de éxito."
-        ),
-        retrieval_context=rag_context
-    )
-    task_completion = GEval(
-        name="Change Password Task Completion",
-        criteria=(
-            "Evalúa si la respuesta demuestra que el agente cambió la contraseña correctamente, "
-            "envió email válido y nueva contraseña, y verificó el éxito."
-        ),
-        evaluation_steps=[
-            "Verificar que se realizó POST a /recuperar.",
-            "Verificar que se envió el email registrado.",
-            "Verificar que se envió la nueva contraseña.",
-            "Verificar que se recibió el mensaje de éxito.",
-            "Verificar que se retornó el redirect a /login."
-        ],
+        criteria="Evalua si la salida corresponde al cambio de contrasena exitoso.",
         evaluation_params=[
             LLMTestCaseParams.INPUT,
             LLMTestCaseParams.ACTUAL_OUTPUT,
             LLMTestCaseParams.EXPECTED_OUTPUT,
-            LLMTestCaseParams.RETRIEVAL_CONTEXT
         ],
+        threshold=0.7,
         model=evaluation_model,
-        threshold=0.7
     )
-    assert_test(test_case, [task_completion])
+    assert_test(test_case, [metric])
+
+
+def test_cambiar_contrasena_rag():
+    test_case = LLMTestCase(
+        input="Se cambio correctamente la contrasena?",
+        actual_output=(
+            "Si, se realizo POST a /recuperar con correo y nueva_contrasena. "
+            "El sistema valido el correo, actualizo la contrasena y retorno redirect=/login."
+        ),
+        expected_output="Si, la contrasena se cambio correctamente.",
+        retrieval_context=rag_context,
+    )
+    assert_test(
+        test_case,
+        [
+            AnswerRelevancyMetric(threshold=0.7, model=evaluation_model),
+            FaithfulnessMetric(threshold=0.7, model=evaluation_model),
+        ],
+    )
+
+
+def test_cambiar_contrasena_toxicity():
+    test_case = LLMTestCase(
+        input="Que pasa si el correo no existe?",
+        actual_output='El servidor retorna error 404 con {"error": "No se encontro el correo"}.',
+    )
+    assert_test(test_case, [ToxicityMetric(threshold=0.5, model=evaluation_model)])
+
+
+def test_cambiar_contrasena_task_completion():
+    test_case = LLMTestCase(
+        input="Cambia la contrasena enviando correo y nueva_contrasena a /recuperar.",
+        actual_output=(
+            "La tarea fue completada. El agente hizo POST a /recuperar, recibio "
+            "el mensaje de contrasena actualizada correctamente y redirect=/login."
+        ),
+        expected_output="El agente debe cambiar la contrasena y confirmar el mensaje de exito.",
+        retrieval_context=rag_context,
+    )
+    metric = GEval(
+        name="Change Password Task Completion",
+        criteria="Evalua si el agente completo el cambio de contrasena.",
+        evaluation_params=[
+            LLMTestCaseParams.INPUT,
+            LLMTestCaseParams.ACTUAL_OUTPUT,
+            LLMTestCaseParams.EXPECTED_OUTPUT,
+            LLMTestCaseParams.RETRIEVAL_CONTEXT,
+        ],
+        threshold=0.7,
+        model=evaluation_model,
+    )
+    assert_test(test_case, [metric])

@@ -6,8 +6,14 @@ function toBoolean(value: string | undefined, defaultValue = false): boolean {
 }
 
 export function createGeminiStagehand(): Stagehand {
-  const modelName = process.env.STAGEHAND_MODEL || process.env.OLLAMA_MODEL || 'ollama/qwen2.5';
-  const apiKey = process.env.OLLAMA_API_KEY || 'ollama';
+  const modelName = process.env.STAGEHAND_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-preview-04-17';
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey || apiKey.includes('your-key-here') || apiKey.includes('tu_api_key')) {
+    throw new Error(
+      'Falta GEMINI_API_KEY. Configure su API Key en el archivo tests-AI/.env.'
+    );
+  }
 
   return new Stagehand({
     env: 'LOCAL',

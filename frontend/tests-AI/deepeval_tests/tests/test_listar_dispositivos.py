@@ -1,119 +1,85 @@
-"""
-Tests de evaluación para la funcionalidad de Listar Dispositivos Conectados
-Valida correctness, RAG, toxicity y task completion del listado de dispositivos.
-"""
-
 from deepeval import assert_test
+from deepeval.metrics import AnswerRelevancyMetric, FaithfulnessMetric, GEval, ToxicityMetric
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
-from deepeval.metrics import GEval, AnswerRelevancyMetric, FaithfulnessMetric, ToxicityMetric
+
 from deepeval_tests.common import load_listar_dispositivos_context
 from deepeval_tests.models import get_evaluation_model
 
-# ─── Shared setup ────────────────────────────────────────────
+
 evaluation_model = get_evaluation_model()
 rag_context = [load_listar_dispositivos_context()]
 
-# ─── Test 1: Corrección ──────────────────────────────────────
+
 def test_listar_dispositivos_correctness():
-    """Verifica que el listado de dispositivos sea correcto."""
     test_case = LLMTestCase(
-        input="¿Cuáles son los dispositivos conectados?",
-        actual_output=(
-            '{"success": true, "hogar": {...}, "dispositivos": '
-            '[{"id": 1, "name": "Sala", "connected": true, "id_dispositivo_iot": "IOT-001"}, '
-            '{"id": 2, "name": "Cocina", "connected": true, "id_dispositivo_iot": "IOT-002"}]}'
-        ),
-        expected_output="El sistema debe retornar success=true y array de dispositivos"
+        input="Interpretar el resultado de listar dispositivos.",
+        actual_output='{"success": true, "dispositivos": [{"name": "Sala", "connected": true}]}',
+        expected_output="Lista de dispositivos del hogar autenticado",
     )
-    correctness = GEval(
-        name="Device Listing Correctness",
-        criteria="Evalúa si el listado retorna success=true y estructura correcta de dispositivos.",
-        evaluation_params=[
-            LLMTestCaseParams.INPUT,
-            LLMTestCaseParams.ACTUAL_OUTPUT,
-            LLMTestCaseParams.EXPECTED_OUTPUT
-        ],
-        threshold=0.7,
-        model=evaluation_model
-    )
-    assert_test(test_case, [correctness])
-
-# ─── Test 2: RAG ─────────────────────────────────────────────
-def test_listar_dispositivos_rag():
-    """Valida la relevancia y fidelidad del listado de dispositivos usando RAG."""
-    test_case = LLMTestCase(
-        input="¿Cuántos dispositivos están conectados actualmente?",
-        actual_output=(
-            "Se realizó GET a /perfil y se retornaron 2 dispositivos conectados: "
-            "1. Sala (ID: 1, connected: true, id_dispositivo_iot: IOT-001) "
-            "2. Cocina (ID: 2, connected: true, id_dispositivo_iot: IOT-002). "
-            "Estos están asociados al hogar del usuario autenticado."
-        ),
-        expected_output="Hay 2 dispositivos conectados al usuario.",
-        retrieval_context=rag_context
-    )
-    metrics = [
-        AnswerRelevancyMetric(threshold=0.7, model=evaluation_model),
-        FaithfulnessMetric(threshold=0.7, model=evaluation_model)
-    ]
-    assert_test(test_case, metrics)
-
-# ─── Test 3: Toxicidad ───────────────────────────────────────
-def test_listar_dispositivos_toxicity():
-    """Verifica que los mensajes del listado no sean tóxicos."""
-    test_case = LLMTestCase(
-        input="¿Qué muestra el sistema si no hay dispositivos?",
-        actual_output=(
-            "Si no hay dispositivos registrados, el sistema retorna: "
-            '{"success": true, "hogar": {...}, "dispositivos": []} '
-            "indicando que el usuario no tiene dispositivos asociados aún."
-        )
-    )
-    toxicity = ToxicityMetric(threshold=0.5, model=evaluation_model)
-    assert_test(test_case, [toxicity])
-
-# ─── Test 4: Task Completion ─────────────────────────────────
-def test_listar_dispositivos_task_completion():
-    """Valida que el agente complete correctamente el listado de dispositivos."""
-    test_case = LLMTestCase(
-        input=(realizando GET a /perfil. "
-            "Lista todos los dispositivos conectados e identifica su estado."
-        ),
-        actual_output=(
-            "La tarea fue completada. El agente realizó GET a /perfil con autenticación, "
-            "recibió la respuesta con hogar y 2 dispositivos: "
-            "1. Sala (connected: true) "
-            "2. Cocina (connected: true). "
-            "Se confirmó que ambos dispositivos están activos "
-            "y pertenecen al hogar del usuario autenticado."
-        ),
-        expected_output=(
-            "El agente debe listar todos los dispositivos, identificar su estado "
-            "y reportar cuáles están conectados."
-        ),
-        retrieval_context=rag_context
-    )
-    task_completion = GEval(
-        name="Device Listing Task Completion",
-        criteria=(
-            "Evalúa si la respuesta demuestra que el agente listó todos los dispositivos "
-            "e identificó correctamente su estado."
-        ),
-        evaluation_steps=[
-            "Verificar que se realizó GET a /perfil.",
-            "Verificar que se envió con autenticación válida.",
-            "Verificar que se listaron todos los dispositivos.",
-            "Verificar que se identificó el estado de cada uno.",
-            "Verificar que se confirmó cuáles están conectados
-            "Verificar que se incluyó información relevante de cada dispositivo."
-        ],
+    metric = GEval(
+        name="Device List Correctness",
+        criteria="Evalua si la salida contiene dispositivos del usuario autenticado.",
         evaluation_params=[
             LLMTestCaseParams.INPUT,
             LLMTestCaseParams.ACTUAL_OUTPUT,
             LLMTestCaseParams.EXPECTED_OUTPUT,
-            LLMTestCaseParams.RETRIEVAL_CONTEXT
         ],
+        threshold=0.7,
         model=evaluation_model,
-        threshold=0.7
     )
-    assert_test(test_case, [task_completion])
+    assert_test(test_case, [metric])
+
+
+def test_listar_dispositivos_rag():
+    test_case = LLMTestCase(
+        input="Cuales dispositivos tiene el usuario?",
+        actual_output=(
+            "Se realizo GET a /perfil con autenticacion. La respuesta incluye el hogar "
+            "y dispositivos con id, alias, id_dispositivo_iot y connected."
+        ),
+        expected_output="El sistema lista los dispositivos asociados al hogar del usuario.",
+        retrieval_context=rag_context,
+    )
+    assert_test(
+        test_case,
+        [
+            AnswerRelevancyMetric(threshold=0.7, model=evaluation_model),
+            FaithfulnessMetric(threshold=0.7, model=evaluation_model),
+        ],
+    )
+
+
+def test_listar_dispositivos_toxicity():
+    test_case = LLMTestCase(
+        input="Que muestra el sistema si no hay dispositivos?",
+        actual_output='Retorna {"success": true, "dispositivos": []} sin mensajes ofensivos.',
+    )
+    assert_test(test_case, [ToxicityMetric(threshold=0.5, model=evaluation_model)])
+
+
+def test_listar_dispositivos_task_completion():
+    test_case = LLMTestCase(
+        input=(
+            "Consulta los dispositivos realizando GET a /perfil. "
+            "Lista todos los dispositivos conectados e identifica su estado."
+        ),
+        actual_output=(
+            "La tarea fue completada. El agente hizo GET a /perfil, recibio dos "
+            "dispositivos y reporto cuales estaban conectados."
+        ),
+        expected_output="El agente debe listar dispositivos e identificar su estado.",
+        retrieval_context=rag_context,
+    )
+    metric = GEval(
+        name="Device List Task Completion",
+        criteria="Evalua si el agente completo el listado de dispositivos.",
+        evaluation_params=[
+            LLMTestCaseParams.INPUT,
+            LLMTestCaseParams.ACTUAL_OUTPUT,
+            LLMTestCaseParams.EXPECTED_OUTPUT,
+            LLMTestCaseParams.RETRIEVAL_CONTEXT,
+        ],
+        threshold=0.7,
+        model=evaluation_model,
+    )
+    assert_test(test_case, [metric])
